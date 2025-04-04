@@ -1,39 +1,35 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
+import { Stack } from "expo-router";
+import { useEffect, useState } from "react";
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storeIsLogin, getIsLogin } from "@/logic/async_storage";
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
+  
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    const checkLogin = async () => {
+      let isLoggedIn = await getIsLogin();
 
-  if (!loaded) {
-    return null;
-  }
+      
+      if (isLoggedIn === null) {
+        await storeIsLogin("false");
+        isLoggedIn = "false";  
+      }
+
+     
+      if (isLoggedIn === "true") {
+        router.replace("/(tabs)/home");  
+      } else {
+        router.replace("/(auth)/login");  
+      }
+    };
+
+    checkLogin();
+  }, []); 
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false}} />
+    </Stack>
   );
 }
